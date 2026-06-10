@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin-top: 40px;
+            background: #111827;
+            padding: 35px;
+            border-radius: 14px;
+        }
+
+        h2 {
+            text-align: center;
+            font-size: 34px;
+        }
+
+        p {
+            line-height: 1.7;
+            color: #d1d5db;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .logout-btn {
+            background: #ef4444;
+        }
+
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 25px;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #374151;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>SecureDocs Platform</h2>
+
+    <p>
+        Welcome to <b>SecureDocs</b> - a secure document management system
+        designed for fast access, controlled sharing and user privacy.
+    </p>
+
+    <p>
+        You can manage your personal profile, create and organize documents,
+        and access administrative tools depending on your role.
+    </p>
+
+    <hr>
+
+    <div class="center">
+
+        <button onclick="location.href='/profile'">
+            👤 Profile
+        </button>
+
+        <button onclick="location.href='/documents'">
+            📄 Documents
+        </button>
+
+        <button id="adminBtn">
+            🔐 Admin Panel
+        </button>
+	
+	<button onclick="location.href='/change-password'">
+   	    🔑 Change Password
+	</button>	
+
+    </div>
+
+    <hr>
+
+    <div class="card">
+
+        <h3>About this system</h3>
+
+        <p>
+            SecureDocs is built as a lightweight web application for
+            managing sensitive documents with role-based access control,
+            session authentication, and database-backed storage.
+        </p>
+
+        <p>
+            Features include document search, profile management,
+            and administrative oversight for system users.
+        </p>
+
+    </div>
+
+    <br>
+
+    <div class="center">
+
+        <form method="POST" action="/logout">
+
+            <button class="logout-btn">
+                Logout
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+async function setupDashboard() {
+
+    const res = await fetch('/auth/me');
+    const user = await res.json();
+
+    const adminBtn = document.getElementById('adminBtn');
+
+    if (user.role === 'admin') {
+
+        adminBtn.onclick = () => {
+            location.href = '/admin/dashboard?is_admin=true';
+        };
+
+    } else {
+
+        adminBtn.onclick = () => {
+            location.href = '/admin/dashboard?is_admin=false';
+        };
+    }
+}
+
+window.onload = setupDashboard;
+
+</script>
+
+</body>
+</html>

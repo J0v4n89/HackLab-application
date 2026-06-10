@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Documents</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            margin-top: 40px;
+            background: #111827;
+            padding: 30px;
+            border-radius: 14px;
+        }
+
+        h2, h3 {
+            text-align: center;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #1f2937;
+            color: white;
+        }
+
+        textarea {
+            min-height: 120px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .danger {
+            background: #dc2626;
+        }
+
+        .danger:hover {
+            background: #b91c1c;
+        }
+
+        .section {
+            margin-top: 30px;
+            background: #1f2937;
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #374151;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: #0f172a;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Document Hub</h2>
+
+    <div class="center">
+        <button onclick="location.href='/dashboard'">
+            Back to dashboard
+        </button>
+    </div>
+
+    <hr>
+
+    <div class="section">
+        <h3>Search documents</h3>
+
+        <input id="searchBox" placeholder="search title..." />
+
+        <button onclick="searchDocs()">
+            Search
+        </button>
+
+        <div id="searchResults"></div>
+    </div>
+
+    <div class="section">
+        <h3>Create document</h3>
+
+        <form method="POST" action="/documents/create">
+            <input name="title" placeholder="title" required />
+
+            <textarea name="content" placeholder="content" required></textarea>
+
+            <input name="file_path" placeholder="file path" />
+
+            <button type="submit">
+                Create
+            </button>
+        </form>
+    </div>
+
+    <div class="section">
+        <h3>My documents</h3>
+
+        <button onclick="loadMyDocuments()">
+            Load my documents
+        </button>
+
+        <div id="myDocumentsBox"></div>
+    </div>
+
+</div>
+
+<script>
+async function searchDocs() {
+    const q = document.getElementById('searchBox').value;
+
+    const res = await fetch('/search?q=' + encodeURIComponent(q));
+    const data = await res.json();
+
+    let html = "<h4>Results</h4>";
+
+    if (!data || data.length === 0) {
+        html += "<p>No results</p>";
+    } else {
+        data.forEach(d => {
+            html += `
+                <div class="result-card">
+                    <b>${d.title}</b>
+
+                    <div class="actions">
+                        <button onclick="viewDocumentById(${d.id}, 'searchResults')">
+                            Open
+                        </button>
+
+                        <button onclick="viewFileById(${d.id})">
+                            View File
+                        </button>
+
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    document.getElementById('searchResults').innerHTML = html;
+}
+
+async function loadMyDocuments() {
+    const meRes = await fetch('/auth/me');
+    const me = await meRes.json();
+
+    if (!me || !me.id) {
+        document.getElementById('myDocumentsBox').innerHTML =
+            "<p>Not logged in</p>";
+        return;
+    }
+
+    const res = await fetch('/documents/my?id=' + me.id);
+    const data = await res.json();
+
+    let html = "<h4>My documents</h4>";
+
+    if (data.error) {
+        html += "<p>" + data.error + "</p>";
+    } else if (!data || data.length === 0) {
+        html += "<p>No documents found</p>";
+    } else {
+        data.forEach(d => {
+            html += `
+                <div class="result-card">
+                    <b>${d.title}</b>
+
+                    <div class="actions">
+                        <button onclick="viewDocumentById(${d.id}, 'myDocumentsBox')">
+                            Open
+                        </button>
+
+                        <button onclick="viewFileById(${d.id})">
+                            View File
+                        </button>
+
+                        <button class="danger" onclick="deleteDocumentById(${d.id})">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    document.getElementById('myDocumentsBox').innerHTML = html;
+}
+
+async function viewDocumentById(id, targetId) {
+    const res = await fetch('/documents/view/' + id);
+    const data = await res.json();
+
+    if (data.error) {
+        document.getElementById(targetId).innerHTML =
+            '<p>' + data.error + '</p>';
+        return;
+    }
+
+    let backButton = '';
+
+    if (targetId === 'searchResults') {
+        backButton = `<button onclick="searchDocs()">Back to search results</button>`;
+    }
+
+    if (targetId === 'myDocumentsBox') {
+        backButton = `<button onclick="loadMyDocuments()">Back to my documents</button>`;
+    }
+
+    document.getElementById(targetId).innerHTML =
+        `
+        <div class="result-card">
+            <h3>${data.title}</h3>
+            <p>${data.content}</p>
+            <br>
+            ${backButton}
+        </div>
+        `;
+}
+
+function viewFileById(id) {
+    location.href = '/documents/file/view/' + id;
+}
+
+function deleteDocumentById(id) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/documents/delete/' + id;
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+</body>
+</html>

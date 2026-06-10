@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0f172a;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 700px;
+            margin-top: 40px;
+            background: #111827;
+            padding: 30px;
+            border-radius: 14px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .card {
+            margin-top: 25px;
+            background: #1f2937;
+            padding: 25px;
+            border-radius: 12px;
+        }
+
+        .profile-item {
+            margin-top: 15px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 10px;
+        }
+
+        .label {
+            color: #60a5fa;
+            font-weight: bold;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>User Profile</h2>
+
+    <div class="card">
+
+        <div id="profileBox">
+            Loading...
+        </div>
+
+    </div>
+
+    <div class="center">
+
+        <button onclick="location.href='/dashboard'">
+            Back to dashboard
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+async function loadProfile() {
+
+    try {
+
+        const meRes = await fetch('/auth/me');
+        const me = await meRes.json();
+
+        if (!me || !me.id) {
+
+            document.getElementById('profileBox').innerHTML =
+                "<p class='error'>Not logged in</p>";
+
+            return;
+        }
+
+        const res = await fetch('/profile/view?id=' + me.id);
+        const json = await res.json();
+
+        if (json.error) {
+
+            document.getElementById('profileBox').innerHTML =
+                "<p class='error'>" + json.error + "</p>";
+
+            return;
+        }
+
+        if (!json.data || json.data.length === 0) {
+
+            document.getElementById('profileBox').innerHTML =
+                "<p>No profile found</p>";
+
+            return;
+        }
+
+        const p = json.data[0];
+
+        document.getElementById('profileBox').innerHTML =
+            `
+            <div class="profile-item">
+                <span class="label">User ID:</span>
+                ${p.id}
+            </div>
+
+            <div class="profile-item">
+                <span class="label">Username:</span>
+                ${p.username}
+            </div>
+
+            <div class="profile-item">
+                <span class="label">Role:</span>
+                ${p.role}
+            </div>
+
+            <div class="profile-item">
+                <span class="label">Bio:</span>
+                ${p.bio || 'No bio'}
+            </div>
+            `;
+
+    } catch (e) {
+
+        document.getElementById('profileBox').innerHTML =
+            "<p class='error'>Error loading profile</p>";
+    }
+}
+
+window.onload = loadProfile;
+
+</script>
+
+</body>
+</html>
